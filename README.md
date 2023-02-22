@@ -31,7 +31,7 @@ The app should now be running on http://localhost:8501.
 Files
 * app.py: Main Streamlit app file.
 * tokenizer.json: Tokenizer file.
-* model.h5: Trained model file(https://drive.google.com/drive/folders/18j3-yUjKG30RPbR-2L1NibyInIiyHCGt?usp=sharing).
+* model.h5: Trained model file([https://drive.google.com/drive/folders/18j3-yUjKG30RPbR-2L1NibyInIiyHCGt?usp=sharing](https://drive.google.com/file/d/18WVKvPe96p5EJWl0CLFlLHNA_GxaOPw2/view?usp=sharing)).
 * requirements.txt: Required Python packages.
 
 ### License
