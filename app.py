@@ -1,15 +1,15 @@
 import streamlit as st
-import tensorflow as tf
 from tensorflow.keras.models import load_model
-from tensorflow.keras.preprocessing.text import tokenizer_from_json
+from keras.preprocessing.text import tokenizer_from_json
 import json
 import re
 import nltk
 from nltk.tokenize import word_tokenize
 from nltk.corpus import stopwords
 from nltk.stem import WordNetLemmatizer
-from tensorflow.keras.preprocessing.sequence import pad_sequences
+from keras.preprocessing.sequence import pad_sequences
 import numpy as np
+import asyncio
 
 # Load the saved model
 model = load_model('model.h5')
@@ -47,7 +47,7 @@ async def predict_sentiment(input_text):
                               padding='post', truncating='post')
 
     # Make a prediction with the model
-    prediction = await tf.asyncio.gather(model.predict(input_pad))
+    prediction = model.predict(input_pad)
 
     # Define the mapping of labels to sentiment names
     labels = {
@@ -63,25 +63,20 @@ async def predict_sentiment(input_text):
     return predicted_label
 
 # Define the Streamlit app
-def app():
+async def app():
     # Set the title of the app
     st.title("Sentiment Analysis App")
 
-    # Add a form for user input
-    with st.form("sentiment_form"):
-        # Add a text input field
-        input_text = st.text_input("Enter some text:")
+    # Add a text input field
+    input_text = await st.text_input("Enter some text:")
 
-        # Add a button to trigger the sentiment prediction
-        submit_button = st.form_submit_button(label='Predict')
-
-    # Call the sentiment prediction function when the form is submitted
-    if submit_button:
+    # Add a button to trigger the sentiment prediction
+    if await st.button("Predict"):
         predicted_sentiment = await predict_sentiment(input_text)
-        st.write(f"The predicted sentiment is {predicted_sentiment}.")
+        await st.write(f"The predicted sentiment is {predicted_sentiment}.")
 
 if __name__ == '__main__':
-    app()
+    asyncio.run(app())
 
 
 
