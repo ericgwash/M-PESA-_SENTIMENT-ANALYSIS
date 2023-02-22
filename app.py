@@ -1,10 +1,10 @@
 import streamlit as st
 from tensorflow.keras.models import load_model
-from keras.preprocessing.text import tokenizer_from_json
+from tensorflow.keras.preprocessing.text import tokenizer_from_json
 import json
 import re
 import nltk
-from nltk.tokenize import word_tokenize
+from nltk.tokenize import word_tokenize, sent_tokenize
 from nltk.corpus import stopwords
 from nltk.stem import WordNetLemmatizer
 from keras.preprocessing.sequence import pad_sequences
@@ -70,10 +70,13 @@ def app():
     input_text = st.text_input("Enter some text:")
 
     # Add a button to trigger the sentiment prediction
-    if st.button("Predict"):
+    form = st.form(key='my-form')
+    submit_button = form.form_submit_button(label='Predict')
+    if submit_button:
         predicted_sentiment = predict_sentiment(input_text)
         st.write(f"The predicted sentiment is {predicted_sentiment}.")
 
 if __name__ == '__main__':
     app()
+
 
