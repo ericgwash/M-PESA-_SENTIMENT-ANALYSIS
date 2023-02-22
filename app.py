@@ -1,13 +1,14 @@
 import streamlit as st
+import tensorflow as tf
 from tensorflow.keras.models import load_model
 from tensorflow.keras.preprocessing.text import tokenizer_from_json
 import json
 import re
 import nltk
-from nltk.tokenize import word_tokenize, sent_tokenize
+from nltk.tokenize import word_tokenize
 from nltk.corpus import stopwords
 from nltk.stem import WordNetLemmatizer
-from keras.preprocessing.sequence import pad_sequences
+from tensorflow.keras.preprocessing.sequence import pad_sequences
 import numpy as np
 
 # Load the saved model
@@ -38,7 +39,7 @@ def lemmatizer(text):
     return lemmatized_text
 
 # Define the sentiment prediction function
-def predict_sentiment(input_text):
+async def predict_sentiment(input_text):
     # Preprocess the input text
     input_text = lemmatizer(input_text)
     input_seq = tokenizer.texts_to_sequences([input_text])
@@ -46,7 +47,7 @@ def predict_sentiment(input_text):
                               padding='post', truncating='post')
 
     # Make a prediction with the model
-    prediction = model.predict(input_pad)
+    prediction = await tf.asyncio.gather(model.predict(input_pad))
 
     # Define the mapping of labels to sentiment names
     labels = {
@@ -66,17 +67,21 @@ def app():
     # Set the title of the app
     st.title("Sentiment Analysis App")
 
-    # Add a text input field
-    input_text = st.text_input("Enter some text:")
+    # Add a form for user input
+    with st.form("sentiment_form"):
+        # Add a text input field
+        input_text = st.text_input("Enter some text:")
 
-    # Add a button to trigger the sentiment prediction
-    form = st.form(key='my-form')
-    submit_button = form.form_submit_button(label='Predict')
+        # Add a button to trigger the sentiment prediction
+        submit_button = st.form_submit_button(label='Predict')
+
+    # Call the sentiment prediction function when the form is submitted
     if submit_button:
-        predicted_sentiment = predict_sentiment(input_text)
+        predicted_sentiment = await predict_sentiment(input_text)
         st.write(f"The predicted sentiment is {predicted_sentiment}.")
 
 if __name__ == '__main__':
     app()
+
 
 
