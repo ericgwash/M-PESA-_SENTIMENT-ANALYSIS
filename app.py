@@ -1,82 +1,57 @@
 import streamlit as st
-from tensorflow.keras.models import load_model
-from keras.preprocessing.text import tokenizer_from_json
+import tensorflow as tf
+from tensorflow.keras.preprocessing.text import tokenizer_from_json
 import json
-import re
-import nltk
-from nltk.tokenize import word_tokenize
-from nltk.corpus import stopwords
-from nltk.stem import WordNetLemmatizer
-from keras.preprocessing.sequence import pad_sequences
-import numpy as np
-import asyncio
 
-# Load the saved model
-model = load_model('model.h5')
-max_tweet_length = 50
+# Load the tokenizer
+with open("tokenizer.json", "r") as f:
+    data = json.load(f)
+    tokenizer = tokenizer_from_json(data)
 
-# Load the tokenizer from file
-with open('tokenizer.json') as f:
-    data1 = f.read()
-    tokenizer = tokenizer_from_json(data1)
+# Load the model
+model = tf.keras.models.load_model('model.h5')
 
-# Define the lemmatizing function
-def lemmatizer(text):
-    wnl = WordNetLemmatizer()
-    stop_words = set(stopwords.words('english'))
-    # Remove URLs
-    text = re.sub(r'http\S+', '', text)
-    # Tokenize the input text
-    tokens = word_tokenize(text.lower())
+# Define a function to preprocess text before making predictions
+def preprocess_text(text):
+    # Tokenize the text
+    text = tokenizer.texts_to_sequences([text])
+    # Pad the sequences
+    text = tf.keras.preprocessing.sequence.pad_sequences(text, maxlen=100, padding='post', truncating='post')
+    return text
 
-    # Remove stopwords and lemmatize the remaining words
-    lemmas = [wnl.lemmatize(word, pos=str2wordnet(pos)) for word, 
-              pos in nltk.pos_tag(tokens) if word not in stop_words]
+# Define the app
+def app():
+    # Set the app title
+    st.set_page_config(page_title='LSTM Model App')
 
-    # Combine the lemmatized words back into a single string
-    lemmatized_text = " ".join(lemmas)
+    # Add a title
+    st.title('LSTM Model App')
 
-    return lemmatized_text
+    # Add a description
+    st.write('Enter some text and the model will predict the next word.')
 
-# Define the sentiment prediction function
-async def predict_sentiment(input_text):
-    # Preprocess the input text
-    input_text = lemmatizer(input_text)
-    input_seq = tokenizer.texts_to_sequences([input_text])
-    input_pad = pad_sequences(input_seq, maxlen=max_tweet_length, 
-                              padding='post', truncating='post')
+    # Add a text input
+    input_text = st.text_input('Enter some text:')
 
-    # Make a prediction with the model
-    prediction = model.predict(input_pad)
+    # Add a button to make predictions
+    if st.button('Predict'):
+        # Preprocess the input text
+        input_text = preprocess_text(input_text)
 
-    # Define the mapping of labels to sentiment names
-    labels = {
-        0: "neutral",
-        1: "negative",
-        2: "positive"
-    }
+        # Make a prediction
+        prediction = model.predict(input_text)
 
-    # Convert the prediction to a label
-    predicted_label = labels[np.argmax(prediction)]
+        # Get the index of the predicted word
+        index = tf.argmax(prediction, axis=1)[0].numpy()
 
-    # Return the predicted sentiment label
-    return predicted_label
+        # Get the predicted word from the tokenizer
+        predicted_word = tokenizer.index_word[index]
 
-# Define the Streamlit app
-async def app():
-    # Set the title of the app
-    st.title("Sentiment Analysis App")
+        # Display the predicted word
+        st.write('The predicted next word is:', predicted_word)
 
-    # Add a text input field
-    input_text = await st.text_input("Enter some text:")
-
-    # Add a button to trigger the sentiment prediction
-    if await st.button("Predict"):
-        predicted_sentiment = await predict_sentiment(input_text)
-        await st.write(f"The predicted sentiment is {predicted_sentiment}.")
-
+# Run the app
 if __name__ == '__main__':
-    asyncio.run(app())
-
+    app()
 
 
